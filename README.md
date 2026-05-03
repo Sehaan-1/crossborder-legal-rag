@@ -1,3 +1,14 @@
+---
+title: Cross-Border Legal RAG
+emoji: ⚖️
+colorFrom: blue
+colorTo: gray
+sdk: gradio
+sdk_version: 4.0.0
+app_file: app.py
+pinned: false
+license: mit
+---
 # Cross-Border Legal RAG
 
 A **Retrieval-Augmented Generation (RAG)** system for cross-border private international law research, combining deterministic rule matching with hybrid dense+BM25 retrieval and a CPU cross-encoder reranker.
