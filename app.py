@@ -1,4 +1,5 @@
 import gradio as gr
+import re
 from rag_answer import answer_question
 from rules_evaluator import evaluate_rules
 
@@ -42,14 +43,27 @@ def process_scenario(
     if not issues_identified: issues_identified.append("General / Unknown")
     
     try:
-        answer, r_passages, rag_passages = answer_question(query, facts=facts)
+        answer, r_passages, rag_passages, stats = answer_question(query, facts=facts)
     except Exception as e:
         return (
             ", ".join(issues_identified),
             proposed_text,
+            "⚠️ Error",
             f"⚠️ Internal error: {e}",
             ""
         )
+    
+    cites = len(set(re.findall(r'\[\d+\]', answer)))
+    dense = stats.get("best_dense", 0.0)
+    
+    if dense >= 0.70 and cites >= 3:
+        badge = "🟢 High"
+    elif dense >= 0.60 and cites >= 1:
+        badge = "🟡 Medium"
+    else:
+        badge = "🔴 Low"
+        
+    conf_text = f"**Confidence:** {badge} <br> <small>(Best Dense: {dense:.2f} | Sources Cited: {cites})</small>"
     
     passages = []
     seen = set()
@@ -72,7 +86,7 @@ def process_scenario(
         )
         
     issues_text = ", ".join(issues_identified)
-    return issues_text, proposed_text, answer, evidence_html
+    return issues_text, proposed_text, conf_text, answer, evidence_html
 
 
 with gr.Blocks(title="Cross-Border Legal RAG") as demo:
@@ -102,6 +116,7 @@ with gr.Blocks(title="Cross-Border Legal RAG") as demo:
             gr.Markdown("### Analysis")
             out_issues = gr.Textbox(label="Issues Identified", interactive=False)
             out_regimes = gr.Textbox(label="Proposed Regimes & Articles (Rule Engine)", interactive=False)
+            out_confidence = gr.HTML(label="Confidence Level")
             
             gr.Markdown("### Short Memo")
             out_memo = gr.Markdown()
@@ -120,7 +135,7 @@ with gr.Blocks(title="Cross-Border Legal RAG") as demo:
             is_tort, 
             no_choice
         ],
-        outputs=[out_issues, out_regimes, out_memo, out_evidence]
+        outputs=[out_issues, out_regimes, out_confidence, out_memo, out_evidence]
     )
 
 if __name__ == "__main__":

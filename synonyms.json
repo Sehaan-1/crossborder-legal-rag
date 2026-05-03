@@ -1,0 +1,6 @@
+{
+    "B2C": ["consumer", "B2C"],
+    "B2B": ["commercial", "B2B"],
+    "habitual residence": ["domicile", "residence", "habitual residence"],
+    "place of performance": ["performance place", "delivery place", "service location"]
+}

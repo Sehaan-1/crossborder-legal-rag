@@ -29,7 +29,7 @@ def run_eval():
         expected_arts = s.get("expected_instruments_articles", [])
         
         # We know LLM takes time. For testing harness speed, if you want full, just wait.
-        ans, r_p, rag_p = answer_question(query, facts=facts)
+        ans, r_p, rag_p, stats = answer_question(query, facts=facts)
         
         is_refused = "I cannot determine" in ans or "out-of-scope" in ans
         

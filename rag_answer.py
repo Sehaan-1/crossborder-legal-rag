@@ -32,9 +32,9 @@ Sources:
 If the Sources do not contain the answer, say exactly:
 I cannot determine from the provided sources.
 
-Otherwise answer with exactly two single-line bullets, under 80 words total:
-- Governing law: <direct answer ending with source citation>
-- Source basis: <one sentence explaining the rule ending with source citation>
+Otherwise answer with 5-7 short bullets. 
+The final bullet must be named "Citations" and list the sources used like:
+- Citations: [1] Rome I, Art. 6; [2] Rome II, Art. 4
 """
     return textwrap.dedent(prompt).strip()
 
@@ -96,18 +96,21 @@ def answer_question(question, k=8, facts=None):
             seen_ids.add(p["id"])
     
     if not passages:
-        return "I cannot determine from the provided sources. Please provide more facts or context.", rule_passages, rag_passages
+        stats = {"best_dense": 0, "best_bm25": 0, "blended_top1": 0}
+        return "I cannot determine from the provided sources. Please provide more facts or context.", rule_passages, rag_passages, stats
+        
+    best_dense = max((p.get("raw_dense", 0) for p in rag_passages), default=0)
+    best_bm25 = max((p.get("unnormalized_bm25", 0) for p in rag_passages), default=0)
+    blended_top1 = passages[0].get("score", 0) if passages else 0
+    stats = {"best_dense": best_dense, "best_bm25": best_bm25, "blended_top1": blended_top1}
         
     # Refusal threshold (bypass if rule matched)
     if not rule_passages:
-        best_dense = max(p.get("raw_dense", 0) for p in rag_passages) if rag_passages else 0
-        best_bm25 = max(p.get("unnormalized_bm25", 0) for p in rag_passages) if rag_passages else 0
-        
         if best_dense < 0.65 and best_bm25 < 4.0:
-            return "I cannot determine from the provided sources. The query appears to be out-of-scope. Please provide more facts or relevant sources.", rule_passages, rag_passages
+            return "I cannot determine from the provided sources. The query appears to be out-of-scope. Please provide more facts or relevant sources.", rule_passages, rag_passages, stats
         
     prompt = build_prompt(question, passages[:k]) # Keep max k
-    return ensure_inline_citations(ollama_generate(MODEL_NAME, prompt)), rule_passages, rag_passages
+    return ensure_inline_citations(ollama_generate(MODEL_NAME, prompt)), rule_passages, rag_passages, stats
 
 
 if __name__ == "__main__":
@@ -118,5 +121,6 @@ if __name__ == "__main__":
     facts = {"consumer": True, "trader_targets_consumer_country": True, "no_choice_of_law": True}
     print("Educational use only - Not legal advice.\n")
     print(f"Question: {question}")
-    answer, r_p, rag_p = answer_question(question, facts=facts)
+    answer, r_p, rag_p, stats = answer_question(question, facts=facts)
     print("Answer:\n", answer)
+    print("Stats:", stats)

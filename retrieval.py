@@ -106,7 +106,24 @@ def _initialize_indices():
 def hybrid_retrieve(query, k_final=8):
     _initialize_indices()
     
-    tokenized_query = query.lower().split()
+    # Synonym expansion
+    synonyms_path = Path("synonyms.json")
+    expanded_query = query
+    if synonyms_path.exists():
+        with open(synonyms_path, "r", encoding="utf-8") as f:
+            syns = json.load(f)
+            extra_tokens = []
+            q_lower = query.lower()
+            for k, v_list in syns.items():
+                if k.lower() in q_lower:
+                    for v in v_list:
+                        extra_tokens.extend(v.lower().split())
+            if extra_tokens:
+                # Deduplicate tokens
+                unique_extras = list(set(extra_tokens))
+                expanded_query = query + " " + " ".join(unique_extras)
+    
+    tokenized_query = expanded_query.lower().split()
     bm25_scores = _BM25_INDEX.get_scores(tokenized_query)
     
     top_bm25_k = min(150, len(_META_CACHE))
@@ -117,7 +134,7 @@ def hybrid_retrieve(query, k_final=8):
     else:
         bm25_norm = bm25_scores
         
-    q_emb = _MODEL_CACHE.encode([query], convert_to_numpy=True)
+    q_emb = _MODEL_CACHE.encode([expanded_query], convert_to_numpy=True)
     q_emb = l2_normalize(q_emb.astype("float32"))
     top_dense_k = min(40, len(_META_CACHE))
     dense_scores, dense_idxs = _FAISS_INDEX_CACHE.search(q_emb, top_dense_k)
@@ -150,6 +167,27 @@ def hybrid_retrieve(query, k_final=8):
     top_hybrid = sorted(results, key=lambda item: item["score"], reverse=True)[:30]
     if not top_hybrid:
         return []
+        
+    # De-duplicate near-identical passages (cosine sim > 0.95)
+    texts = [p["text"] for p in top_hybrid]
+    embs = _MODEL_CACHE.encode(texts, convert_to_numpy=True)
+    embs = l2_normalize(embs.astype("float32"))
+    
+    deduped = []
+    deduped_embs = []
+    for i, p in enumerate(top_hybrid):
+        emb = embs[i]
+        is_dup = False
+        for kept_emb in deduped_embs:
+            sim = np.dot(emb, kept_emb)
+            if sim > 0.95:
+                is_dup = True
+                break
+        if not is_dup:
+            deduped.append(p)
+            deduped_embs.append(emb)
+            
+    top_hybrid = deduped
         
     cross_inp = [[query, p["text"]] for p in top_hybrid]
     ce_scores = _CROSS_ENCODER.predict(cross_inp)
