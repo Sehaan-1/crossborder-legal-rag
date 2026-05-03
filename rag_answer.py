@@ -38,46 +38,34 @@ Do not say you cannot determine the answer.
 
 
 def generate_llm(prompt, temperature=0.2):
-    try:
-        from llama_cpp import Llama
-        import multiprocessing
-        import os
-        
-        # Singleton Llama instance
-        global _LLAMA_INST
-        if "_LLAMA_INST" not in globals():
-            model_path = "models/qwen2.5-1.5b-instruct-q3_k_m.gguf"
-            if os.path.exists(model_path):
-                _LLAMA_INST = Llama(
-                    model_path=model_path,
-                    n_ctx=2048,
-                    n_threads=multiprocessing.cpu_count(),
-                    n_batch=512,
-                    verbose=False
-                )
-            else:
-                _LLAMA_INST = None
-                
-        if _LLAMA_INST:
-            output = _LLAMA_INST.create_chat_completion(
+    import os
+
+    # ── 1. Groq API (HF Space / cloud) ──────────────────────────────────────
+    groq_key = os.environ.get("GROQ_API_KEY")
+    if groq_key:
+        try:
+            from groq import Groq
+            client = Groq(api_key=groq_key)
+            response = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": prompt}
+                    {"role": "user",   "content": prompt},
                 ],
                 temperature=temperature,
-                max_tokens=256
+                max_tokens=512,
             )
-            return output["choices"][0]["message"]["content"]
-    except ImportError:
-        pass
-        
-    # Fallback to Ollama if llama-cpp is not installed or model missing
+            return response.choices[0].message.content
+        except Exception as e:
+            return f"[Error] Groq API failed: {e}"
+
+    # ── 2. Ollama (local development fallback) ───────────────────────────────
     url = "http://localhost:11434/api/chat"
     payload = {
         "model": MODEL_NAME,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": prompt},
+            {"role": "user",   "content": prompt},
         ],
         "stream": False,
         "options": {"temperature": temperature},
@@ -87,9 +75,9 @@ def generate_llm(prompt, temperature=0.2):
         r.raise_for_status()
         return r.json()["message"]["content"]
     except requests.exceptions.ConnectionError:
-        return "[Error] Could not connect to Ollama. Please ensure Ollama is running on port 11434, or llama-cpp-python is installed."
+        return "[Error] No GROQ_API_KEY set and Ollama is not running on port 11434."
     except requests.exceptions.Timeout:
-        return "[Error] Request timed out. The model may be overloaded."
+        return "[Error] Ollama request timed out."
     except Exception as e:
         return f"[Error] Unexpected error: {e}"
 
