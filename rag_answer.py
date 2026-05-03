@@ -52,7 +52,7 @@ def generate_llm(prompt, temperature=0.2):
             if os.path.exists(model_path):
                 _LLAMA_INST = Llama(
                     model_path=model_path,
-                    n_ctx=1024,
+                    n_ctx=2048,
                     n_threads=multiprocessing.cpu_count(),
                     n_batch=512,
                     verbose=False
@@ -110,7 +110,7 @@ def ensure_inline_citations(answer, default="[1]"):
     return "\n".join(lines)
 
 
-def answer_question(question, k=8, facts=None):
+def answer_question(question, k=4, facts=None):
     rule_passages = []
     if facts:
         proposed_articles = evaluate_rules(facts)
