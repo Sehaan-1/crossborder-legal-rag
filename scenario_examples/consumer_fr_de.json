@@ -1,0 +1,12 @@
+{
+  "parties": {
+    "consumer_country": "FR",
+    "trader_country": "DE"
+  },
+  "contract": {
+    "type": "e-commerce",
+    "choice_of_law": null,
+    "performance_place": "DE"
+  },
+  "notes": "Trader targets French consumers (FR website, shipping to FR)"
+}

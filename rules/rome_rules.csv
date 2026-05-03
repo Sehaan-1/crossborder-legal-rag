@@ -1,0 +1,5 @@
+area,condition,instrument,article,note
+consumer,consumer==True and trader_targets_consumer_country==True,Rome I (Regulation (EC) No 593/2008),Art. 6(1),mandatory consumer protections
+employment,employment==True,Rome I (Regulation (EC) No 593/2008),Art. 8(1),habitual place of work
+contract_default,no_choice_of_law==True and contract==True and consumer==False and employment==False,Rome I (Regulation (EC) No 593/2008),Art. 4(1),closest connection
+tort_general,tort==True,Rome II (Regulation (EC) No 864/2007),Art. 4(1),place of damage
