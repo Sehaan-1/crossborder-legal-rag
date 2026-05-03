@@ -52,8 +52,10 @@ def generate_llm(prompt, temperature=0.2):
             if os.path.exists(model_path):
                 _LLAMA_INST = Llama(
                     model_path=model_path,
-                    n_ctx=2048,
-                    n_threads=multiprocessing.cpu_count()
+                    n_ctx=1024,
+                    n_threads=multiprocessing.cpu_count(),
+                    n_batch=512,
+                    verbose=False
                 )
             else:
                 _LLAMA_INST = None
@@ -65,7 +67,7 @@ def generate_llm(prompt, temperature=0.2):
                     {"role": "user", "content": prompt}
                 ],
                 temperature=temperature,
-                max_tokens=512
+                max_tokens=256
             )
             return output["choices"][0]["message"]["content"]
     except ImportError:
