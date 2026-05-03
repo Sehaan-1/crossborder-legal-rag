@@ -89,7 +89,7 @@ def process_scenario(
     return issues_text, proposed_text, conf_text, answer, evidence_html
 
 
-with gr.Blocks(title="Cross-Border Legal RAG", theme=gr.themes.Soft()) as demo:
+with gr.Blocks(title="Cross-Border Legal RAG") as demo:
     gr.Markdown("# Cross-Border Legal RAG")
     gr.Markdown("**Educational use only — Not legal advice.**")
     
@@ -139,4 +139,4 @@ with gr.Blocks(title="Cross-Border Legal RAG", theme=gr.themes.Soft()) as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    demo.launch()
