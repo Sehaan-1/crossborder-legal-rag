@@ -16,6 +16,8 @@ A **Retrieval-Augmented Generation (RAG)** system for cross-border private inter
 
 > **Educational use only — Not legal advice.**
 
+> **Privacy**: Do not enter personal data, real client names, or case numbers. Queries are processed by the Groq API — see [their privacy policy](https://groq.com/privacy-policy/). No data is stored by this application.
+
 ---
 
 ## Features
