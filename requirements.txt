@@ -1,5 +1,7 @@
+gradio==4.*
+sentence-transformers==3.*
 faiss-cpu
-sentence-transformers
 rank-bm25
-requests
-gradio
+numpy
+tqdm
+llama-cpp-python==0.2.84

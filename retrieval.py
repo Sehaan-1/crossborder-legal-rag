@@ -187,7 +187,10 @@ def hybrid_retrieve(query, k_final=8):
             deduped.append(p)
             deduped_embs.append(emb)
             
-    top_hybrid = deduped
+    # Disable cross-encoder in HF Spaces to save memory/startup time
+    import os
+    if os.environ.get("SPACE_ID"):
+        return top_hybrid[:k_final]
         
     cross_inp = [[query, p["text"]] for p in top_hybrid]
     ce_scores = _CROSS_ENCODER.predict(cross_inp)

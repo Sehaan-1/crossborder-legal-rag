@@ -39,10 +39,42 @@ The final bullet must be named "Citations" and list the sources used like:
     return textwrap.dedent(prompt).strip()
 
 
-def ollama_generate(model, prompt, temperature=0.2):
+def generate_llm(prompt, temperature=0.2):
+    try:
+        from llama_cpp import Llama
+        import multiprocessing
+        import os
+        
+        # Singleton Llama instance
+        global _LLAMA_INST
+        if "_LLAMA_INST" not in globals():
+            model_path = "models/qwen2.5-1.5b-instruct-q3_k_m.gguf"
+            if os.path.exists(model_path):
+                _LLAMA_INST = Llama(
+                    model_path=model_path,
+                    n_ctx=2048,
+                    n_threads=multiprocessing.cpu_count()
+                )
+            else:
+                _LLAMA_INST = None
+                
+        if _LLAMA_INST:
+            output = _LLAMA_INST.create_chat_completion(
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=temperature,
+                max_tokens=512
+            )
+            return output["choices"][0]["message"]["content"]
+    except ImportError:
+        pass
+        
+    # Fallback to Ollama if llama-cpp is not installed or model missing
     url = "http://localhost:11434/api/chat"
     payload = {
-        "model": model,
+        "model": MODEL_NAME,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
@@ -55,11 +87,11 @@ def ollama_generate(model, prompt, temperature=0.2):
         r.raise_for_status()
         return r.json()["message"]["content"]
     except requests.exceptions.ConnectionError:
-        return "[Error] Could not connect to Ollama. Please ensure Ollama is running on port 11434."
+        return "[Error] Could not connect to Ollama. Please ensure Ollama is running on port 11434, or llama-cpp-python is installed."
     except requests.exceptions.Timeout:
-        return "[Error] Ollama request timed out. The model may be overloaded."
+        return "[Error] Request timed out. The model may be overloaded."
     except Exception as e:
-        return f"[Error] Unexpected error from Ollama: {e}"
+        return f"[Error] Unexpected error: {e}"
 
 
 def ensure_inline_citations(answer, default="[1]"):
@@ -110,7 +142,7 @@ def answer_question(question, k=8, facts=None):
             return "I cannot determine from the provided sources. The query appears to be out-of-scope. Please provide more facts or relevant sources.", rule_passages, rag_passages, stats
         
     prompt = build_prompt(question, passages[:k]) # Keep max k
-    return ensure_inline_citations(ollama_generate(MODEL_NAME, prompt)), rule_passages, rag_passages, stats
+    return ensure_inline_citations(generate_llm(prompt)), rule_passages, rag_passages, stats
 
 
 if __name__ == "__main__":
