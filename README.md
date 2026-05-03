@@ -1,18 +1,3 @@
----
-title: Cross-Border Legal RAG
-emoji: ⚖️
-colorFrom: blue
-colorTo: gray
-sdk: gradio
-sdk_version: 4.42.0
-app_file: app.py
-pinned: false
-license: mit
-python_version: 3.10.14
----
-
-<div align="center">
-
 # ⚖️ Cross-Border Legal RAG
 
 ### Production-grade Retrieval-Augmented Generation for EU Private International Law
