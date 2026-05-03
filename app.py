@@ -89,14 +89,14 @@ def process_scenario(
     return issues_text, proposed_text, conf_text, answer, evidence_html
 
 
-with gr.Blocks(title="Cross-Border Legal RAG", theme=gr.themes.Soft()) as demo:
+with gr.Blocks(title="Cross-Border Legal RAG") as demo:
     gr.Markdown("# Cross-Border Legal RAG")
     gr.Markdown("**Educational use only — Not legal advice.**")
     
     with gr.Row():
         with gr.Column():
             gr.Markdown("### Scenario Facts")
-            query_input = gr.Textbox(lines=4, label="Free-text Scenario / Query", placeholder="Describe the legal scenario...")
+            query_input = gr.Textbox(lines=4, label="Query", placeholder="Describe the legal scenario...")
             
             with gr.Row():
                 is_contract = gr.Checkbox(label="Is Contract?")
@@ -115,7 +115,7 @@ with gr.Blocks(title="Cross-Border Legal RAG", theme=gr.themes.Soft()) as demo:
         with gr.Column():
             gr.Markdown("### Analysis")
             out_issues = gr.Textbox(label="Issues Identified", interactive=False)
-            out_regimes = gr.Textbox(label="Proposed Regimes & Articles (Rule Engine)", interactive=False)
+            out_regimes = gr.Textbox(label="Proposed Regimes & Articles", interactive=False)
             out_confidence = gr.HTML(label="Confidence Level")
             
             gr.Markdown("### Short Memo")
@@ -139,4 +139,4 @@ with gr.Blocks(title="Cross-Border Legal RAG", theme=gr.themes.Soft()) as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    demo.launch(server_name="0.0.0.0", server_port=7860, theme=gr.themes.Soft())

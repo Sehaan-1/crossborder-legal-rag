@@ -23,18 +23,16 @@ def build_prompt(question, passages):
         sources.append(f"[{i}] {p['citation']}\n{p['text']}")
     sources_text = "\n\n".join(sources)
     prompt = f"""
-Question:
-{question}
+Question: {question}
 
 Sources:
 {sources_text}
 
-If the Sources do not contain the answer, say exactly:
-I cannot determine from the provided sources.
-
-Otherwise answer with 5-7 short bullets. 
-The final bullet must be named "Citations" and list the sources used like:
-- Citations: [1] Rome I, Art. 6; [2] Rome II, Art. 4
+Using ONLY the sources above, answer in 5-7 short bullet points.
+You MUST use these sources — they are directly relevant.
+Each bullet must end with an inline citation like [1].
+Final bullet must be: - Citations: [1] Instrument, Article; [2] ...
+Do not say you cannot determine the answer.
 """
     return textwrap.dedent(prompt).strip()
 
@@ -97,7 +95,13 @@ def generate_llm(prompt, temperature=0.2):
 
 
 def ensure_inline_citations(answer, default="[1]"):
-    if answer.strip() == "I cannot determine from the provided sources.":
+    refusal_phrases = [
+        "I cannot determine from the provided sources",
+        "cannot determine",
+        "[Error]"
+    ]
+    # Don't modify refusal or error responses
+    if any(p in answer for p in refusal_phrases):
         return answer
 
     lines = []
